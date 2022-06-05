@@ -3,8 +3,10 @@
 (defpackage "NAMED-LET"
   (:shadow "LET")
   (:use "COMMON-LISP")
-  (:export "LET"
-           "NAMED-LAMBDA"))
+  (:export
+   ;; "LET"
+   "NAMED-LAMBDA"
+   "NAMED-LET"))
 
 (in-package "NAMED-LET")
 
@@ -13,6 +15,8 @@
      #',name))
 
 (defmacro let (name-or-bindings bindings-or-first &body body)
+  "The LET special form with extended syntax.  A symbolic NAME may be provided before the binding list
+that is bound to the function performing the LET binding so that the function may be called again."
   (flet ((binding-name (binding)
            (cond ((symbolp binding) binding)
                  ((not (consp binding)) (error "Bad synax: LET"))
@@ -48,3 +52,25 @@
              ,bindings-or-first
              ,@body))
           (t (error "Bad syntax: LET")))))
+
+(defmacro named-let (name bindings &body body)
+  (flet ((binding-name (binding)
+           (cond ((symbolp binding) binding)
+                 ((not (consp binding)) (error "Bad synax: NAMED-LET"))
+                 ((symbolp (car binding)) (car binding))
+                 (t (error "Bad syntax: NAMED-LET"))))
+
+         (binding-value (binding)
+           (cond ((symbolp binding) 'nil)
+                 ((not (consp binding)) (error "Bad syntax: NAMED-LET"))
+                 ((null (cdr binding)) 'nil)
+                 ((not (consp (cdr binding))) (error "Bad syntax: NAMED-LET"))
+                 ((null (cddr binding)) (cadr binding))
+                 (t `(progn ,@(cdr binding))))))
+
+        `(funcall (named-lambda ,name
+                                ,(map 'list #'binding-name
+                                      bindings)
+                                ,@body)
+                  ,@(map 'list #'binding-value
+                         bindings))))
