@@ -4,11 +4,25 @@
   (:shadow "LET")
   (:use "COMMON-LISP")
   (:export
+   "FLAMBDA"
    ;; "LET"
    "NAMED-LAMBDA"
    "NAMED-LET"))
 
 (in-package "NAMED-LET")
+
+(defmacro flambda ((&rest arglist) &body body)
+  "A lambda that binds its arguments in the function namespace."
+  (let ((vars (map 'list (lambda (arg)
+                           (gensym (concatenate 'string (symbol-name arg) "-")))
+                   arglist)))
+    `(lambda ,vars
+       (flet ,(map 'list (lambda (arg var)
+                           `(,arg (&rest args)
+                              (apply ,var args)))
+                   arglist
+                   vars)
+         ,@body))))
 
 (defmacro named-lambda (name (&rest arglist) &body body)
   `(labels ((,name ,arglist ,@body))
@@ -68,9 +82,7 @@ that is bound to the function performing the LET binding so that the function ma
                  ((null (cddr binding)) (cadr binding))
                  (t `(progn ,@(cdr binding))))))
 
-        `(funcall (named-lambda ,name
-                                ,(map 'list #'binding-name
-                                      bindings)
-                                ,@body)
-                  ,@(map 'list #'binding-value
-                         bindings))))
+    `(funcall (named-lambda ,name ,(map 'list #'binding-name bindings)
+                ,@body)
+              ,@(map 'list #'binding-value
+                     bindings))))
