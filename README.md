@@ -1,6 +1,18 @@
 # named-let
 Named lambda and named let macros.
 
+## Installation
+
+ - Clone this repository into `~/quicklisp/local-projects/`
+
+ - (ql:quickload "named-let")
+
+## Use
+
+In your defpackage forms, add `(:shadowing-import-from "NAMED-LET" "LET")`
+
+---
+
 A `named-lambda` is a lambda expression that has a recursive binding for itself that is visible within the lambda body.  This allows the lambda to recursively call itself.  For example, here we map an anonymous factorial program over a list:
 
 ```
