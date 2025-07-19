@@ -3,7 +3,15 @@ Named lambda and named let macros.
 
 ## Overview
 
-This library provides two powerful macros for recursive programming in Common Lisp:
+This is a small Common Lisp library that provides a collection of
+Scheme-inspired binding constructs. It offers macros like `named-let`,
+`letrec`, `letrec*`, and a Lisp-1 style `define` to allow for more
+expressive and convenient ways to handle local recursion and
+definitions.
+
+The main goal is to bring some of the syntactic sugar and binding
+paradigms from Scheme into Common Lisp, making it easier to write
+certain recursive or self-referential constructs.
 
 - **`named-lambda`**: A lambda expression with a recursive binding for itself, enabling self-referential calls.
 - **`named-let`**: An enhanced `let` expression that allows recursive invocation with updated bindings.
@@ -38,6 +46,55 @@ To use the macros, add the following to your `defpackage` form:
 (defpackage "MY-PACKAGE"
   (:shadowing-import-from "NAMED-LET" "LET")
   (:use "COMMON-LISP" "NAMED-LET"))
+```
+
+---
+### `define`
+`define` is a macro that allows you to define local functions in a
+Lisp-1 style, similar to Scheme's `define`. It can be used to create
+local functions that can refer to themselves recursively.
+
+Caveat:  This macro is not a replacement for `defun` and will only
+work at top-level.
+
+```lisp
+(define (fact x)
+  (if (zerop x)
+      1
+      (* x (fact (1- x)))))
+      
+(fact 5) ; Output: 120
+
+```
+
+---
+### `letrec` and `letrec*`
+`letrec` and `letrec*` are macros that allow you to define local
+recursive functions. They are similar to the `let` construct but
+enable the functions to refer to themselves recursively.
+
+`letrec` performs a simultaneous binding of all variables, while
+`letrec*` allows for sequential binding, where each variable can use
+previous bindings during its definition.
+
+```lisp
+(letrec ((fact (lambda (x)
+                 (if (zerop x)
+                     1
+                     (* x (fact (1- x))))))
+         (fib (lambda (n)
+                 (if (< n 2)
+                     n
+                     (+ (fib (- n 1)) (fib (- n 2))))))
+         (sum (lambda (lst)
+                 (if (null lst)
+                     0
+                     (+ (car lst) (sum (cdr lst)))))))
+  (list (fact 5)   ; Output: 120
+        (fib 10)    ; Output: 55
+        (sum '(1 2 3 4 5)))) ; Output: 15
+
+;; Output: (120 55 15)
 ```
 
 ---
@@ -121,7 +178,6 @@ If you are an *aficionado* of the `series` library, you can integrate `named-let
 ## Additional Features
 
 - **Error Handling**: The macros include error handling for invalid inputs, such as dotted lists in `named-let`.
-- **Customizable Bindings**: Both macros allow flexible and dynamic binding updates during recursion.
 
 ---
 
