@@ -1,0 +1,2 @@
+named-let.asd
+named-let-test.asd
